@@ -1,0 +1,65 @@
+name: Build APK
+
+on:
+  workflow_dispatch:
+    inputs:
+      app_name:
+        description: App name shown under the icon
+        default: تطبيقي
+  push:
+    branches: [main]
+    paths: [www/**, .github/workflows/build-apk.yml]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Write Capacitor config
+        env:
+          APP_NAME: ${{ inputs.app_name || 'تطبيقي' }}
+        run: |
+          cat > package.json <<'EOF'
+          {"name":"mylibrary","version":"1.0.0","private":true,"dependencies":{"@capacitor/core":"^7.0.0","@capacitor/android":"^7.0.0"},"devDependencies":{"@capacitor/cli":"^7.0.0"}}
+          EOF
+          node -e "require('fs').writeFileSync('capacitor.config.json',JSON.stringify({appId:'com.mylibrary.app',appName:process.env.APP_NAME,webDir:'www',server:{androidScheme:'https',cleartext:true},android:{allowMixedContent:true}}))"
+
+      - name: Install and create Android project
+        run: |
+          npm install
+          npx cap add android
+          npx cap sync android
+
+      - name: Build debug APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Keep APK as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Publish APK as a release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "build-${{ github.run_number }}" \
+            android/app/build/outputs/apk/debug/app-debug.apk \
+            --title "APK build ${{ github.run_number }}" \
+            --notes "Debug APK built from www/index.html"
