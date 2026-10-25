@@ -1,0 +1,584 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>تطبيقي</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Reem+Kufi:wght@600&display=swap">
+<style>
+/* Layout: sticky top bar, poster grid library, full-width reader/player with chapter toolbar */
+:root{
+  --bg:#f3f1ee; --surface:#ffffff; --fg:#1d1b19; --muted:#6d6862; --line:#e2ded8;
+  --accent:#0f766e; --accent-fg:#ffffff; --danger:#b3261e;
+  --display:"Reem Kufi","IBM Plex Sans Arabic",system-ui,sans-serif;
+  --body:"IBM Plex Sans Arabic",system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#12171a; --surface:#1b2227; --fg:#eceae6; --muted:#9aa4a8; --line:#2a343a;
+  --accent:#2dd4bf; --accent-fg:#06201d; --danger:#f2b8b5; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#12171a; --surface:#1b2227; --fg:#eceae6; --muted:#9aa4a8; --line:#2a343a;
+  --accent:#2dd4bf; --accent-fg:#06201d; --danger:#f2b8b5; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font:15px/1.6 var(--body);
+  padding-block:env(safe-area-inset-top,0px) 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:1100px;margin:0 auto}
+header.bar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 0;flex-wrap:wrap}
+h1{font:600 26px/1.2 var(--display);margin:0;letter-spacing:.01em;overflow-wrap:anywhere}
+button,input,select,textarea{font:inherit;color:inherit}
+.btn{border:1px solid var(--line);background:var(--surface);padding:8px 14px;border-radius:8px;cursor:pointer;min-height:40px;display:inline-flex;align-items:center;justify-content:center;text-decoration:none}
+.btn.primary{background:var(--accent);color:var(--accent-fg);border-color:transparent;font-weight:600}
+.btn.danger{color:var(--danger)}
+.btn[aria-pressed=true]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.btn:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,.card:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.tools{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.tools input[type=search]{flex:1 1 200px;min-width:0}
+input,select,textarea{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:9px 12px;width:100%}
+textarea{min-height:110px;resize:vertical}
+textarea.code{direction:ltr;text-align:left;font-family:ui-monospace,Menlo,monospace;font-size:13px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:transparent;padding:5px 12px;border-radius:99px;cursor:pointer;font-size:13px}
+.chip[aria-pressed=true]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden;cursor:pointer;display:flex;flex-direction:column;min-width:0;text-align:start;padding:0}
+.cover{aspect-ratio:2/3;background:linear-gradient(160deg,var(--line),var(--bg));display:grid;place-items:center;font:600 34px var(--display);color:var(--muted);position:relative;max-width:100%}
+.cover img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.meta{padding:10px 12px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.meta b{font-weight:600;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.meta small{color:var(--muted)}
+.bar2{height:3px;background:var(--line)}
+.bar2 i{display:block;height:100%;background:var(--accent)}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:16px}
+.panel h2{font:600 18px var(--display);margin:0 0 12px}
+label{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
+.hint{color:var(--muted);font-size:13px;margin:6px 0 0}
+.stage{background:#000;border-radius:12px;overflow:hidden;position:relative}
+.stage video{width:100%;max-height:70vh;display:block;background:#000}
+.stage iframe{width:100%;height:70vh;border:0;display:block;background:#fff}
+.reader{display:flex;flex-direction:column;align-items:center;background:#000;border-radius:12px;overflow:hidden}
+.reader img{width:100%;max-width:800px;display:block;margin:0}
+.reader .miss{color:#9aa4a8;padding:16px;display:block}
+.pager{display:flex;flex-direction:column;align-items:center;gap:10px;background:#000;border-radius:12px;padding:8px 0}
+.pager img{width:100%;max-width:800px;max-height:82vh;object-fit:contain;cursor:pointer;display:block}
+.pager .pinfo{color:#cfd6d9;font-size:13px}
+.rtools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+.rtools select{flex:1 1 140px;min-width:0;width:auto}
+.eps{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0}
+.ep{border:1px solid var(--line);background:var(--surface);padding:6px 12px;border-radius:8px;cursor:pointer;min-width:44px;text-align:center}
+.ep[aria-current=true]{background:var(--accent);color:var(--accent-fg);border-color:transparent}
+.empty{text-align:center;color:var(--muted);padding:48px 12px}
+.note{border-inline-start:3px solid var(--accent);padding:6px 12px;color:var(--muted);font-size:13px;margin:12px 0}
+.desc{white-space:pre-wrap;color:var(--muted);margin:0 0 12px;max-width:70ch}
+.saved{color:var(--muted);font-size:12px;min-height:18px;margin-top:6px}
+.next{display:flex;justify-content:center;padding:14px}
+.ltr{direction:ltr;text-align:left}
+@media (prefers-reduced-motion:no-preference){.card{transition:transform .12s}.card:hover{transform:translateY(-2px)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="bar">
+    <h1 id="appname">تطبيقي</h1>
+    <div class="row">
+      <button class="btn primary" id="btnAdd">+ إضافة</button>
+      <button class="btn" id="btnIO">الإعدادات</button>
+    </div>
+  </header>
+
+  <section id="addPanel" class="panel" hidden>
+    <h2 id="formTitle">إضافة عنصر</h2>
+    <label for="fTitle">العنوان</label>
+    <input id="fTitle" autocomplete="off">
+    <div class="row" style="margin-top:8px">
+      <button class="btn" id="btnMeta" type="button">جلب الوصف والغلاف من AniList</button>
+      <span class="hint" id="metaMsg" role="status"></span>
+    </div>
+    <label for="fType">النوع</label>
+    <select id="fType">
+      <option value="auto">تلقائي</option>
+      <option value="images">قراءة (مانغا / ويبتون)</option>
+      <option value="video">فيديو (mp4, webm, m3u8)</option>
+      <option value="page">صفحة مضمّنة</option>
+    </select>
+    <label for="fFiles">من جهازك: ملفات CBZ / ZIP أو صور (كل ملف = فصل)</label>
+    <input id="fFiles" type="file" multiple accept=".cbz,.zip,image/*">
+    <p class="hint" id="fileMsg" role="status"></p>
+    <label for="fUrls">أو روابط (رابط في كل سطر. للقراءة: افصل الفصول بسطر فارغ، للفيديو: كل سطر حلقة)</label>
+    <textarea id="fUrls" class="code" placeholder="https://example.com/ch1/001.jpg&#10;https://example.com/ch1/002.jpg&#10;&#10;https://example.com/ch2/001.jpg"></textarea>
+    <label for="fCover">رابط الغلاف (اختياري)</label>
+    <input id="fCover" class="ltr" placeholder="https://...">
+    <label for="fDesc">الوصف (اختياري)</label>
+    <textarea id="fDesc"></textarea>
+    <p class="hint">أضف فقط محتوى تملكه أو مسموح لك بقراءته.</p>
+    <div class="row" style="margin-top:12px">
+      <button class="btn primary" id="btnSave">حفظ</button>
+      <button class="btn" id="btnCancel">إلغاء</button>
+      <button class="btn danger" id="btnDelete" hidden>حذف</button>
+    </div>
+  </section>
+
+  <section id="ioPanel" class="panel" hidden>
+    <h2>الإعدادات</h2>
+    <label for="sName">اسم التطبيق</label>
+    <input id="sName" autocomplete="off" maxlength="40">
+    <p class="hint">الاسم يظهر في أعلى التطبيق. اسم الأيقونة على الجوال يتحدد وقت بناء الـ APK.</p>
+    <h2 style="margin-top:18px">استيراد وتصدير القائمة</h2>
+    <p class="hint">الصق قائمة JSON أو ملف M3U أو روابط سطر بسطر. التصدير لا يشمل الملفات المرفوعة من الجهاز.</p>
+    <textarea id="ioText" class="code" aria-label="نص الاستيراد والتصدير"></textarea>
+    <div class="row" style="margin-top:12px">
+      <button class="btn primary" id="btnImport">استيراد</button>
+      <button class="btn" id="btnExport">تصدير</button>
+      <button class="btn" id="btnCopy">نسخ</button>
+      <button class="btn" id="btnCloseIO">إغلاق</button>
+    </div>
+    <p class="hint" id="ioMsg" role="status"></p>
+  </section>
+
+  <section id="libView">
+    <div class="tools">
+      <input type="search" id="q" placeholder="ابحث في مكتبتك" aria-label="بحث">
+      <div class="chips" id="chips">
+        <button class="chip" data-f="all" aria-pressed="true">الكل</button>
+        <button class="chip" data-f="images" aria-pressed="false">قراءة</button>
+        <button class="chip" data-f="video" aria-pressed="false">فيديو</button>
+        <button class="chip" data-f="page" aria-pressed="false">صفحات</button>
+      </div>
+    </div>
+    <div id="grid" class="grid"></div>
+    <div id="empty" class="empty" hidden>المكتبة فاضية. اضغط «إضافة» وارفع ملفات CBZ من جهازك أو ضع روابطك.</div>
+  </section>
+
+  <section id="playView" hidden>
+    <div class="row" style="justify-content:space-between;margin-bottom:12px">
+      <button class="btn" id="btnBack">← المكتبة</button>
+      <div class="row">
+        <a class="btn" id="btnOpenExt" target="_blank" rel="noopener noreferrer">فتح الرابط</a>
+        <button class="btn" id="btnEdit">تعديل</button>
+      </div>
+    </div>
+    <h2 id="pTitle" style="font:600 20px var(--display);margin:0 0 6px"></h2>
+    <p class="desc" id="pDesc" hidden></p>
+    <div class="rtools" id="rtools" hidden>
+      <button class="btn" id="chPrev" aria-label="الفصل السابق">›</button>
+      <select id="chSel" aria-label="الفصل"></select>
+      <button class="btn" id="chNext" aria-label="الفصل التالي">‹</button>
+      <button class="btn" id="modeWeb" aria-pressed="true">ويبتون</button>
+      <button class="btn" id="modePage" aria-pressed="false">صفحات</button>
+    </div>
+    <div id="stage"></div>
+    <div class="saved" id="saved" role="status"></div>
+    <div class="eps" id="eps"></div>
+    <div class="note" id="pNote" hidden></div>
+  </section>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.17/hls.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+(function(){
+  var KEY="my-links-library-v1", SKEY="my-links-settings-v1";
+  var $=function(s){return document.querySelector(s)};
+  var items=[], settings={name:"تطبيقي"}, filter="all", editing=null, current=null;
+  var hls=null, lastSave=0, pending=[], objUrls=[], scrollH=null, keyH=null, savedTimer=null;
+
+  /* ---------- storage ---------- */
+  function load(){
+    try{var s=localStorage.getItem(SKEY); if(s)settings=Object.assign(settings,JSON.parse(s))}catch(e){}
+    try{var r=localStorage.getItem(KEY); if(r){items=JSON.parse(r)||[]; return}}catch(e){}
+    items=[];
+  }
+  function save(){try{localStorage.setItem(KEY,JSON.stringify(items))}catch(e){}}
+  function saveSettings(){try{localStorage.setItem(SKEY,JSON.stringify(settings))}catch(e){}}
+  var dbp=null;
+  function db(){
+    if(!dbp)dbp=new Promise(function(res,rej){
+      var r=indexedDB.open("mylib",1);
+      r.onupgradeneeded=function(){r.result.createObjectStore("f")};
+      r.onsuccess=function(){res(r.result)}; r.onerror=function(){rej(r.error)};
+    });
+    return dbp;
+  }
+  function idb(mode,fn){
+    return db().then(function(d){return new Promise(function(res,rej){
+      var tx=d.transaction("f",mode), rq=fn(tx.objectStore("f"));
+      tx.oncomplete=function(){res(rq&&rq.result)}; tx.onerror=function(){rej(tx.error)};
+    })});
+  }
+  function idbPut(k,v){return idb("readwrite",function(s){return s.put(v,k)})}
+  function idbGet(k){return idb("readonly",function(s){return s.get(k)})}
+  function idbDel(k){return idb("readwrite",function(s){return s.delete(k)}).catch(function(){})}
+
+  /* ---------- helpers ---------- */
+  function uid(){return "i"+Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
+  function el(tag,cls){var e=document.createElement(tag); if(cls)e.className=cls; return e}
+  function validUrl(u){try{var x=new URL(u);return x.protocol==="http:"||x.protocol==="https:"}catch(e){return false}}
+  function parseLines(t){return t.split(/\r?\n/).map(function(s){return s.trim()}).filter(validUrl)}
+  function parseChapters(t){
+    return t.split(/\n\s*\n/).map(function(b,i){return{t:"الفصل "+(i+1),urls:parseLines(b)}}).filter(function(c){return c.urls.length});
+  }
+  function guess(u){
+    var p=(u||"").split("?")[0].toLowerCase();
+    if(/\.(mp4|webm|m3u8|mov|m4v|ogv|mkv)$/.test(p))return "video";
+    if(/\.(jpe?g|png|webp|gif|avif)$/.test(p))return "images";
+    return "page";
+  }
+  function typeName(t){return t==="video"?"فيديو":t==="images"?"قراءة":"صفحة"}
+  function chaps(it){return it.chapters&&it.chapters.length?it.chapters:[{t:"",urls:it.urls||[]}]}
+  function nat(a,b){return a.localeCompare(b,undefined,{numeric:true})}
+  function mime(n){var e=(n.split(".").pop()||"").toLowerCase();return e==="jpg"?"image/jpeg":"image/"+(e||"jpeg")}
+  function flash(){
+    var s=$("#saved"); s.textContent="تم حفظ تقدمك تلقائياً";
+    clearTimeout(savedTimer); savedTimer=setTimeout(function(){s.textContent=""},1600);
+  }
+  function setProgress(p){current.pos=p; save(); flash()}
+  function revoke(){objUrls.forEach(function(u){URL.revokeObjectURL(u)}); objUrls=[]}
+
+  /* ---------- library ---------- */
+  function renderLib(){
+    var q=$("#q").value.trim().toLowerCase(), g=$("#grid"); g.textContent="";
+    var shown=items.filter(function(it){return (filter==="all"||it.type===filter)&&(!q||it.title.toLowerCase().indexOf(q)>-1)});
+    $("#empty").hidden=items.length>0;
+    shown.forEach(function(it){
+      var c=el("button","card"); c.type="button";
+      var cv=el("div","cover"); cv.textContent=(it.title||"؟").trim().charAt(0);
+      if(it.cover&&validUrl(it.cover)){
+        var im=el("img"); im.src=it.cover; im.alt=""; im.loading="lazy"; im.referrerPolicy="no-referrer";
+        im.onerror=function(){im.remove()}; cv.appendChild(im);
+      }
+      var m=el("div","meta"), b=el("b"), s=el("small"); b.textContent=it.title;
+      var n=it.type==="images"?chaps(it).length:(it.urls||[]).length;
+      s.textContent=typeName(it.type)+" · "+n+(it.type==="images"?" فصل":n>1?" حلقة":"");
+      m.appendChild(b); m.appendChild(s); c.appendChild(cv); c.appendChild(m);
+      var total=it.type==="images"?chaps(it).length:(it.urls||[]).length;
+      if(it.pos&&it.pos.i>0&&total>1){
+        var pr=el("div","bar2"), f=el("i"); f.style.width=Math.min(100,Math.round(it.pos.i/total*100))+"%";
+        pr.appendChild(f); c.appendChild(pr);
+      }
+      c.onclick=function(){openItem(it.id)};
+      g.appendChild(c);
+    });
+  }
+  function stopMedia(){
+    if(hls){try{hls.destroy()}catch(e){} hls=null}
+    if(scrollH){window.removeEventListener("scroll",scrollH); scrollH=null}
+    if(keyH){document.removeEventListener("keydown",keyH); keyH=null}
+    revoke(); $("#stage").textContent="";
+  }
+  function show(view){
+    $("#libView").hidden=view!=="lib"; $("#playView").hidden=view!=="play";
+    if(view==="lib"){stopMedia(); current=null; renderLib()}
+  }
+
+  function openItem(id){
+    current=items.filter(function(x){return x.id===id})[0]; if(!current)return;
+    $("#addPanel").hidden=true; $("#ioPanel").hidden=true;
+    $("#pTitle").textContent=current.title;
+    var d=$("#pDesc"); d.textContent=current.desc||""; d.hidden=!current.desc;
+    $("#rtools").hidden=current.type!=="images"; $("#eps").textContent=""; $("#pNote").hidden=true; $("#saved").textContent="";
+    show("play");
+    if(current.type==="video")playVideo(current.pos&&current.pos.i||0,current.pos&&current.pos.t||0);
+    else if(current.type==="images")readImages();
+    else showPage();
+    window.scrollTo(0,0);
+  }
+
+  /* ---------- video ---------- */
+  function renderEps(active){
+    var e=$("#eps"); e.textContent="";
+    if(current.type!=="video"||current.urls.length<2)return;
+    current.urls.forEach(function(u,i){
+      var b=el("button","ep"); b.type="button"; b.textContent=i+1;
+      if(i===active)b.setAttribute("aria-current","true");
+      b.onclick=function(){playVideo(i,0)}; e.appendChild(b);
+    });
+  }
+  function playVideo(i,t){
+    stopMedia(); $("#pNote").hidden=true;
+    var url=current.urls[i]; current.pos={i:i,t:t}; save(); renderEps(i);
+    $("#btnOpenExt").hidden=false; $("#btnOpenExt").href=url;
+    var st=el("div","stage"), v=el("video"); v.controls=true; v.playsInline=true; v.preload="metadata";
+    st.appendChild(v); $("#stage").appendChild(st);
+    var isHls=/\.m3u8(\?|$)/i.test(url);
+    function seek(){if(t>3){try{v.currentTime=t}catch(e){}}}
+    function fail(){var n=$("#pNote"); n.hidden=false; n.textContent="تعذّر تشغيل هذا الرابط. تأكد أنه رابط مباشر لملف فيديو أو قائمة m3u8، وأن الموقع يسمح بالتشغيل من تطبيقات أخرى."}
+    if(isHls&&!v.canPlayType("application/vnd.apple.mpegurl")&&window.Hls&&Hls.isSupported()){
+      hls=new Hls(); hls.loadSource(url); hls.attachMedia(v);
+      hls.on(Hls.Events.MANIFEST_PARSED,seek);
+      hls.on(Hls.Events.ERROR,function(_,d){if(d.fatal)fail()});
+    }else{v.src=url; v.addEventListener("loadedmetadata",seek,{once:true})}
+    v.addEventListener("error",fail);
+    v.addEventListener("timeupdate",function(){
+      var n=Date.now(); if(n-lastSave>4000){lastSave=n; current.pos={i:i,t:Math.floor(v.currentTime)}; save(); flash()}
+    });
+    v.addEventListener("ended",function(){
+      if(i+1<current.urls.length)playVideo(i+1,0); else{current.pos={i:i,t:0};save()}
+    });
+  }
+
+  /* ---------- reader (webtoon / paged) ---------- */
+  function resolveUrls(c){
+    if(!c.local)return Promise.resolve(c.urls||[]);
+    return idbGet(c.key).then(function(bl){
+      return (bl||[]).map(function(b){var u=URL.createObjectURL(b); objUrls.push(u); return u});
+    });
+  }
+  function setMode(m){
+    current.mode=m; save();
+    $("#modeWeb").setAttribute("aria-pressed",m==="webtoon"?"true":"false");
+    $("#modePage").setAttribute("aria-pressed",m==="paged"?"true":"false");
+  }
+  function readImages(){
+    var cs=chaps(current), sel=$("#chSel"); sel.textContent="";
+    cs.forEach(function(c,i){var o=el("option"); o.value=i; o.textContent=c.t||("الفصل "+(i+1)); sel.appendChild(o)});
+    var first=cs.filter(function(c){return !c.local&&c.urls&&c.urls[0]})[0];
+    $("#btnOpenExt").hidden=!first; if(first)$("#btnOpenExt").href=first.urls[0];
+    setMode(current.mode||"webtoon");
+    var p=current.pos||{};
+    loadChapter(Math.min(p.i||0,cs.length-1),p.f||0,p.p||0);
+  }
+  function loadChapter(ci,f,p){
+    var cs=chaps(current), c=cs[ci];
+    if(scrollH){window.removeEventListener("scroll",scrollH); scrollH=null}
+    if(keyH){document.removeEventListener("keydown",keyH); keyH=null}
+    revoke(); $("#stage").textContent=""; $("#chSel").value=ci;
+    current.pos={i:ci,f:f||0,p:p||0}; save();
+    resolveUrls(c).then(function(urls){
+      if(!urls.length){var n=$("#pNote"); n.hidden=false; n.textContent="هذا الفصل فاضي أو ملفاته غير متوفرة."; return}
+      $("#pNote").hidden=true;
+      if(current.mode==="paged")renderPaged(urls,ci,p||0,cs.length); else renderWebtoon(urls,ci,f||0,cs.length);
+    });
+  }
+  function nextBtn(ci,total){
+    var w=el("div","next");
+    if(ci+1<total){
+      var b=el("button","btn primary"); b.type="button"; b.textContent="الفصل التالي ←";
+      b.onclick=function(){loadChapter(ci+1,0,0); window.scrollTo(0,0)}; w.appendChild(b);
+    }else{w.textContent="آخر فصل"; w.style.color="#9aa4a8"}
+    return w;
+  }
+  function renderWebtoon(urls,ci,f,total){
+    var r=el("div","reader"), waits=[], ready=false;
+    urls.forEach(function(u){
+      var im=el("img"); im.alt=""; im.decoding="async"; im.referrerPolicy="no-referrer";
+      waits.push(new Promise(function(res){
+        im.onload=res;
+        im.onerror=function(){var a=el("a","miss"); a.href=u; a.target="_blank"; a.rel="noopener noreferrer"; a.textContent="تعذّر تحميل الصورة"; im.replaceWith(a); res()};
+      }));
+      im.src=u; r.appendChild(im);
+    });
+    var st=el("div"); st.appendChild(r); st.appendChild(el("div","reader")).appendChild(nextBtn(ci,total));
+    $("#stage").appendChild(st);
+    var top=function(){return r.getBoundingClientRect().top+window.scrollY};
+    Promise.race([Promise.all(waits),new Promise(function(res){setTimeout(res,6000)})]).then(function(){
+      if(f>0)window.scrollTo(0,top()+f*r.offsetHeight);
+      ready=true;
+    });
+    var tm=null;
+    scrollH=function(){
+      if(!ready)return; clearTimeout(tm);
+      tm=setTimeout(function(){
+        var h=r.offsetHeight||1, fr=Math.max(0,Math.min(1,(window.scrollY-top())/h));
+        setProgress({i:ci,f:Math.round(fr*1000)/1000,p:0});
+      },400);
+    };
+    window.addEventListener("scroll",scrollH,{passive:true});
+  }
+  function renderPaged(urls,ci,p,total){
+    var w=el("div","pager"), im=el("img"), info=el("div","pinfo"), idx=Math.max(0,Math.min(p,urls.length-1));
+    im.alt=""; im.referrerPolicy="no-referrer";
+    var ctl=el("div","row"), bp=el("button","btn"), bn=el("button","btn");
+    bp.type=bn.type="button"; bp.textContent="› السابق"; bn.textContent="التالي ‹";
+    ctl.appendChild(bp); ctl.appendChild(bn);
+    w.appendChild(im); w.appendChild(info); w.appendChild(ctl); $("#stage").appendChild(w);
+    function go(n){
+      if(n<0){if(ci>0)loadChapter(ci-1,0,0); return}
+      if(n>=urls.length){if(ci+1<total)loadChapter(ci+1,0,0); return}
+      idx=n; im.src=urls[idx]; info.textContent=(idx+1)+" / "+urls.length;
+      setProgress({i:ci,f:0,p:idx});
+      if(urls[idx+1]){var pre=new Image(); pre.src=urls[idx+1]}
+    }
+    im.onclick=function(e){var rc=im.getBoundingClientRect(); go(e.clientX<rc.left+rc.width/2?idx+1:idx-1)};
+    bp.onclick=function(){go(idx-1)}; bn.onclick=function(){go(idx+1)};
+    keyH=function(e){if(e.key==="ArrowLeft")go(idx+1); else if(e.key==="ArrowRight")go(idx-1)};
+    document.addEventListener("keydown",keyH);
+    go(idx);
+  }
+
+  /* ---------- embedded page ---------- */
+  function showPage(){
+    stopMedia(); var u=current.urls[0]; $("#btnOpenExt").hidden=false; $("#btnOpenExt").href=u;
+    var st=el("div","stage"), f=el("iframe"); f.src=u; f.referrerPolicy="no-referrer";
+    f.setAttribute("sandbox","allow-scripts allow-same-origin allow-forms allow-presentation allow-popups");
+    f.setAttribute("allowfullscreen",""); f.title=current.title;
+    st.appendChild(f); $("#stage").appendChild(st);
+    var n=$("#pNote"); n.hidden=false; n.textContent="بعض المواقع تمنع عرضها داخل تطبيقات أخرى. إذا طلعت الصفحة فاضية اضغط «فتح الرابط».";
+  }
+
+  /* ---------- add / edit ---------- */
+  function openForm(it){
+    editing=it||null; pending=[]; $("#ioPanel").hidden=true;
+    $("#formTitle").textContent=it?"تعديل العنصر":"إضافة عنصر";
+    $("#fTitle").value=it?it.title:""; $("#fType").value=it?it.type:"auto";
+    var txt="";
+    if(it){
+      if(it.type==="images")txt=chaps(it).filter(function(c){return !c.local}).map(function(c){return (c.urls||[]).join("\n")}).filter(Boolean).join("\n\n");
+      else txt=(it.urls||[]).join("\n");
+    }
+    $("#fUrls").value=txt; $("#fCover").value=it?it.cover||"":""; $("#fDesc").value=it?it.desc||"":"";
+    $("#fFiles").value=""; $("#fileMsg").textContent=it&&it.type==="images"&&chaps(it).some(function(c){return c.local})?"الفصول المرفوعة من جهازك محفوظة. اختيار ملفات جديدة يضيفها بعدها.":"";
+    $("#metaMsg").textContent=""; $("#btnDelete").hidden=!it; $("#addPanel").hidden=false;
+    $("#fTitle").focus(); $("#addPanel").scrollIntoView({block:"nearest"});
+  }
+  function readFiles(files){
+    var imgs=[], zips=[];
+    files.forEach(function(f){if(/\.(cbz|zip)$/i.test(f.name))zips.push(f); else if(/^image\//.test(f.type)||/\.(jpe?g|png|webp|gif|avif)$/i.test(f.name))imgs.push(f)});
+    var out=[];
+    zips.sort(function(a,b){return nat(a.name,b.name)});
+    return zips.reduce(function(chain,z){
+      return chain.then(function(){return JSZip.loadAsync(z)}).then(function(zip){
+        var names=Object.keys(zip.files).filter(function(n){return !zip.files[n].dir&&/\.(jpe?g|png|webp|gif|avif)$/i.test(n)&&n.indexOf("__MACOSX")<0}).sort(nat);
+        return Promise.all(names.map(function(n){return zip.files[n].async("blob").then(function(b){return new Blob([b],{type:mime(n)})})}))
+          .then(function(blobs){if(blobs.length)out.push({t:z.name.replace(/\.(cbz|zip)$/i,""),blobs:blobs})});
+      });
+    },Promise.resolve()).then(function(){
+      if(imgs.length){imgs.sort(function(a,b){return nat(a.name,b.name)}); out.push({t:"فصل من الصور ("+imgs.length+")",blobs:imgs})}
+      return out;
+    });
+  }
+  async function saveForm(){
+    var raw=$("#fUrls").value, urls=parseLines(raw);
+    var type=$("#fType").value;
+    var keep=editing&&editing.type==="images"?chaps(editing).filter(function(c){return c.local}):[];
+    if(!urls.length&&!pending.length&&!keep.length){$("#fUrls").focus(); $("#fUrls").setAttribute("aria-invalid","true"); return}
+    $("#fUrls").removeAttribute("aria-invalid");
+    if(type==="auto")type=(pending.length||keep.length)?"images":guess(urls[0]);
+    var title=$("#fTitle").value.trim()||(pending[0]?pending[0].t:(function(){try{return new URL(urls[0]).hostname}catch(e){return "بدون عنوان"}})());
+    var it=editing||{id:uid(),pos:{i:0,t:0}};
+    it.title=title; it.type=type; it.cover=$("#fCover").value.trim(); it.desc=$("#fDesc").value.trim();
+    if(type==="images"){
+      var added=[];
+      for(var j=0;j<pending.length;j++){
+        var key=it.id+":"+uid(); await idbPut(key,pending[j].blobs).catch(function(){});
+        added.push({t:pending[j].t,local:true,key:key,n:pending[j].blobs.length});
+      }
+      var cs=keep.concat(added,parseChapters(raw));
+      it.chapters=cs; it.urls=[].concat.apply([],cs.map(function(c){return c.urls||[]}));
+    }else{it.urls=urls; delete it.chapters}
+    if(!editing)items.unshift(it);
+    save(); $("#addPanel").hidden=true; pending=[]; var back=editing; editing=null;
+    if(back&&current&&current.id===back.id)openItem(back.id); else show("lib");
+  }
+  function deleteItem(it){
+    chaps(it).forEach(function(c){if(c.local)idbDel(c.key)});
+    items=items.filter(function(x){return x!==it}); save();
+  }
+
+  /* ---------- metadata (AniList public API) ---------- */
+  function fetchMeta(){
+    var t=$("#fTitle").value.trim(), msg=$("#metaMsg");
+    if(!t){$("#fTitle").focus(); msg.textContent="اكتب العنوان أولاً."; return}
+    msg.textContent="جاري البحث…";
+    fetch("https://graphql.anilist.co",{method:"POST",headers:{"Content-Type":"application/json",Accept:"application/json"},
+      body:JSON.stringify({query:"query($s:String){Media(search:$s,type:MANGA){title{romaji english} description(asHtml:false) coverImage{large}}}",variables:{s:t}})})
+    .then(function(r){return r.json()}).then(function(j){
+      var m=j&&j.data&&j.data.Media; if(!m)throw new Error("none");
+      var d=(m.description||"").replace(/<br\s*\/?>/gi,"\n");
+      d=new DOMParser().parseFromString(d,"text/html").documentElement.textContent.trim();
+      if(d)$("#fDesc").value=d;
+      if(m.coverImage&&m.coverImage.large)$("#fCover").value=m.coverImage.large;
+      msg.textContent="تم جلب الوصف والغلاف.";
+    }).catch(function(){msg.textContent="ما لقيت نتيجة أو ما في اتصال بالإنترنت. اكتب الاسم بالإنجليزية وجرّب."});
+  }
+
+  /* ---------- import / export ---------- */
+  function importText(t){
+    t=t.trim(); var added=0;
+    if(!t)return 0;
+    if(t.charAt(0)==="["||t.charAt(0)==="{"){
+      var list; try{var j=JSON.parse(t); list=Array.isArray(j)?j:(j.items||[])}catch(e){return -1}
+      list.forEach(function(o){
+        var type=(o.type==="video"||o.type==="images"||o.type==="page")?o.type:null, cs=null, urls=(o.urls||(o.url?[o.url]:[])).filter(validUrl);
+        if(Array.isArray(o.chapters)){cs=o.chapters.map(function(c){return{t:c.t||c.title||"",urls:(c.urls||[]).filter(validUrl)}}).filter(function(c){return c.urls.length}); urls=[].concat.apply([],cs.map(function(c){return c.urls}))}
+        if(!urls.length)return;
+        type=type||guess(urls[0]);
+        var it={id:uid(),title:o.title||o.name||"بدون عنوان",type:type,urls:urls,cover:validUrl(o.cover||"")?o.cover:"",desc:o.desc||"",pos:{i:0,t:0}};
+        if(type==="images")it.chapters=cs||[{t:"",urls:urls}];
+        items.push(it); added++;
+      });
+    }else{
+      var title="";
+      t.split(/\r?\n/).forEach(function(l){
+        l=l.trim();
+        if(l.indexOf("#EXTINF")===0){var k=l.lastIndexOf(","); title=k>-1?l.slice(k+1).trim():""}
+        else if(validUrl(l)){var ty=guess(l); var it={id:uid(),title:title||l,type:ty,urls:[l],cover:"",pos:{i:0,t:0}}; if(ty==="images")it.chapters=[{t:"",urls:[l]}]; items.push(it); title=""; added++}
+      });
+    }
+    save(); return added;
+  }
+  function exportJson(){
+    return JSON.stringify(items.map(function(x){
+      var o={title:x.title,type:x.type,cover:x.cover||"",desc:x.desc||""};
+      if(x.type==="images"){o.chapters=chaps(x).filter(function(c){return !c.local}).map(function(c){return{t:c.t,urls:c.urls}}); if(!o.chapters.length)return null}
+      else o.urls=x.urls;
+      return o;
+    }).filter(Boolean),null,2);
+  }
+
+  /* ---------- wiring ---------- */
+  function applyName(){$("#appname").textContent=settings.name||"تطبيقي"; document.title=settings.name||"تطبيقي"}
+  $("#sName").addEventListener("input",function(){settings.name=this.value.trim()||"تطبيقي"; saveSettings(); applyName()});
+  $("#btnAdd").onclick=function(){show("lib");openForm(null)};
+  $("#btnCancel").onclick=function(){$("#addPanel").hidden=true; pending=[]};
+  $("#btnSave").onclick=saveForm;
+  $("#btnMeta").onclick=fetchMeta;
+  $("#fFiles").addEventListener("change",function(){
+    var m=$("#fileMsg"), files=[].slice.call(this.files);
+    if(!files.length){pending=[]; m.textContent=""; return}
+    m.textContent="جاري قراءة الملفات…";
+    readFiles(files).then(function(out){
+      pending=out; var n=out.reduce(function(a,c){return a+c.blobs.length},0);
+      m.textContent=out.length?("جاهز: "+out.length+" فصل، "+n+" صورة. اضغط حفظ."):"ما لقيت صور داخل الملفات المختارة.";
+      if(out.length&&!$("#fTitle").value.trim())$("#fTitle").value=out[0].t;
+    }).catch(function(){m.textContent="تعذّرت قراءة الملفات. تأكد أنها CBZ أو ZIP سليمة."});
+  });
+  $("#btnDelete").onclick=function(){
+    if(!editing)return; var b=this;
+    if(b.dataset.armed!=="1"){b.dataset.armed="1"; b.textContent="اضغط مرة ثانية للتأكيد"; setTimeout(function(){b.dataset.armed="0"; b.textContent="حذف"},3000); return}
+    b.dataset.armed="0"; b.textContent="حذف"; deleteItem(editing); editing=null; $("#addPanel").hidden=true; show("lib");
+  };
+  $("#btnEdit").onclick=function(){if(current)openForm(current)};
+  $("#btnBack").onclick=function(){show("lib")};
+  $("#chSel").onchange=function(){loadChapter(+this.value,0,0); window.scrollTo(0,0)};
+  $("#chPrev").onclick=function(){var i=+$("#chSel").value; if(i>0){loadChapter(i-1,0,0); window.scrollTo(0,0)}};
+  $("#chNext").onclick=function(){var i=+$("#chSel").value; if(i+1<chaps(current).length){loadChapter(i+1,0,0); window.scrollTo(0,0)}};
+  function switchMode(m){if(current.mode===m)return; setMode(m); var p=current.pos||{}; loadChapter(+$("#chSel").value,0,p.p||0)}
+  $("#modeWeb").onclick=function(){switchMode("webtoon")};
+  $("#modePage").onclick=function(){switchMode("paged")};
+  $("#btnIO").onclick=function(){$("#addPanel").hidden=true; $("#ioPanel").hidden=!$("#ioPanel").hidden; $("#ioMsg").textContent=""; $("#sName").value=settings.name};
+  $("#btnCloseIO").onclick=function(){$("#ioPanel").hidden=true};
+  $("#btnImport").onclick=function(){
+    var n=importText($("#ioText").value);
+    $("#ioMsg").textContent=n<0?"صيغة JSON غير صحيحة.":n===0?"ما لقيت روابط صالحة للاستيراد.":"تم استيراد "+n+" عنصر.";
+    if(n>0){$("#ioText").value=""; renderLib()}
+  };
+  $("#btnExport").onclick=function(){$("#ioText").value=exportJson(); $("#ioMsg").textContent="هذي نسختك. انسخها واحفظها في مكان آمن."};
+  $("#btnCopy").onclick=function(){
+    var ta=$("#ioText"), done=function(){$("#ioMsg").textContent="تم النسخ."}, fb=function(){ta.focus(); ta.select(); $("#ioMsg").textContent="حدّد النص وانسخه يدوياً."};
+    if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(ta.value).then(done,fb); else fb();
+  };
+  $("#q").addEventListener("input",renderLib);
+  $("#chips").addEventListener("click",function(e){
+    var b=e.target.closest(".chip"); if(!b)return; filter=b.dataset.f;
+    document.querySelectorAll(".chip").forEach(function(c){c.setAttribute("aria-pressed",c===b?"true":"false")});
+    renderLib();
+  });
+
+  load(); applyName(); renderLib();
+})();
+</script>
+</body>
+</html>
